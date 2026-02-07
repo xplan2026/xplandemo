@@ -1,0 +1,83 @@
+name = "tactics-1"
+main = "src/index.js"
+compatibility_date = "2025-01-16"
+account_id = "1b9f2ccbdc655cf10384c9ef205b6eab"
+
+# Cron Trigger: 每分钟执行
+[triggers]
+crons = ["* * * * *"]
+
+# KV命名空间绑定（用于RPC节点池）
+[[kv_namespaces]]
+binding = "RPC_POOL"
+id = ""
+preview_id = ""
+
+# 可观测性配置
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = true
+head_sampling_rate = 1.0
+
+[observability.traces]
+enabled = true
+
+# 环境变量
+[vars]
+WORKER_ID = "tactics-1"
+WORKER_NAME = "tactics-1"
+
+# 被保护钱包地址（逗号分隔）
+PROTECTED_WALLETS = "0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939"
+
+# 钱包扫描间隔（秒）
+WALLET_SCAN_INTERVAL = "0"
+
+# Polygon Amoy RPC节点配置
+POLYGON_AMOY_RPC = "https://rpc-amoy.polygon.technology"
+POLYGON_AMOY_RPC_NODES = "https://rpc-amoy.polygon.technology,https://rpc.ankr.com/polygon_amoy,https://polygon-amoy.blockpi.network/v1/rpc/public"
+
+# POL阈值（触发应急状态）
+POL_THRESHOLD = "0.01"
+
+# 扫描超时配置（毫秒）
+MAX_SCAN_DURATION = "7000"
+
+# 转账竞争模式：true=使用所有POL作为Gas费上限，false=保留少量POL
+COMPETITIVE_MODE = "true"
+
+# XPD代币地址
+TOKEN_XPD = "0x35774A4E1fFEee74Fa3859F89cfae00b3aC8C3A8"
+
+# 应急状态配置
+EMERGENCY_MAX_DURATION = "600"
+EMERGENCY_SCAN_INTERVAL = "5"
+
+# 转账配置
+MAX_TRANSFER_RETRIES = "3"
+TARGET_POL_BALANCE = "0.001"
+
+# Gas补充配置（连续Gas不足错误次数上限）
+MAX_GAS_ERRORS = "3"
+
+# 安全钱包地址（接收转出的资产）
+SAFE_WALLET = "0x2a71e200d13558631831c3e78e88afde8464f761"
+
+# Gas补充钱包地址
+GAS_FUNDING_WALLET = "0x633be54ef2c776bedd8555afc1375847e4b5d8f3"
+
+# Secrets (使用 wrangler secret put 配置)
+# API_KEY - API密钥，用于保护POST端点
+# SUPABASE_URL - Supabase项目URL
+# SUPABASE_KEY - Supabase服务密钥
+# WALLET_PRIVATE_KEY_32af... - 被保护钱包私钥
+# SAFE_WALLET_PRIVATE_KEY - 安全钱包私钥
+# GAS_FUNDING_WALLET_PRIVATE_KEY - Gas费补充钱包私钥
+#
+# 配置方法：
+# 方法 1: 使用 setup-secrets.sh 或 setup-secrets.ps1（从 .env 读取）
+# 方法 2: 手动配置
+#   npx wrangler secret put API_KEY
+#   （然后输入密钥值）

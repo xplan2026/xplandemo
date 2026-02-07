@@ -1,0 +1,62 @@
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.*
+
+# Wrangler environment variables
+.dev.vars
+**/.dev.vars
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Cloudflare Workers
+.wrangler/
+worker-configuration.d.ts
+**/.dev.vars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Wallet keys and secrets
+wallets/
+secrets/
+private-keys/
+*.pem
+*.key
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+.codebuddy/

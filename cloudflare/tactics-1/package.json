@@ -1,0 +1,17 @@
+{
+  "name": "worker-integrated-pool",
+  "version": "2.4.0",
+  "description": "Worker-Integrated-Pool: 集成池扫描机器人 (v2.4.0) - 主账号",
+  "author": "",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.61.1"
+  }
+}

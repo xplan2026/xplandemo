@@ -1,0 +1,32 @@
+{
+  "name": "x-plan-cloudflare",
+  "version": "2.4.0",
+  "description": "X-plan Cloudflare Workers - 区块链资产主动防御系统 (v2.4.0 扩展池架构)",
+  "private": true,
+  "workspaces": [
+    "worker-integrated-pool",
+    "extensions/*"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd worker-integrated-pool && npm install",
+    "dev": "cd worker-integrated-pool && npm run dev",
+    "deploy": "cd worker-integrated-pool && npm run deploy"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "bsc",
+    "blockchain",
+    "security",
+    "web3",
+    "asset-protection"
+  ],
+  "author": "X-plan Team",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.61.1"
+  }
+}
