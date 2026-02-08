@@ -1,0 +1,29 @@
+{
+  "name": "xplan-anti-theft",
+  "version": "1.0.0",
+  "description": "X-plan 智能合约防盗币",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network polygonAmoy",
+    "verify:testnet": "hardhat verify --network polygonAmoy"
+  },
+  "keywords": [
+    "ethereum",
+    "solidity",
+    "hardhat",
+    "anti-theft"
+  ],
+  "author": "X-plan",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.3.1"
+  }
+}

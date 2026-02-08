@@ -7,22 +7,55 @@
   <title>X-plan Demo - 资产保护演示</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/sidebar.css">
 </head>
 <body>
-  <!-- 顶部警告条 -->
-  <div class="warning-bar">
-    <div class="container">
-      <span class="warning-icon">⚠️</span>
-      <span class="warning-text">重要提示：本项目仅用于 Polygon Amoy 测试网，请勿在主网使用真实资产</span>
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">X-plan Demo</div>
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <span class="hamburger"></span>
+      </button>
     </div>
-  </div>
+    
+    <nav class="sidebar-nav">
+      <a href="#bot" class="nav-item active" data-page="bot">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-text">机器人抢跑</span>
+      </a>
+      <a href="#smart" class="nav-item" data-page="smart">
+        <span class="nav-icon">🔒</span>
+        <span class="nav-text">智能合约防盗币</span>
+      </a>
+      <a href="#docs" class="nav-item" data-page="docs">
+        <span class="nav-icon">📖</span>
+        <span class="nav-text">操作指南</span>
+      </a>
+    </nav>
 
-  <!-- 顶部导航栏 -->
-  <header class="header">
-    <div class="container">
-      <div class="header-content">
-        <h1 class="logo">X-plan Demo</h1>
-        <div class="header-actions">
+    <div class="sidebar-footer">
+      <div class="wallet-status" id="walletStatus">
+        <span class="status-icon">🔴</span>
+        <span class="status-text">未连接钱包</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <div class="main-wrapper">
+    <!-- 顶部警告条 -->
+    <div class="warning-bar">
+      <div class="container">
+        <span class="warning-icon">⚠️</span>
+        <span class="warning-text">重要提示：本项目仅用于 Polygon Amoy 测试网，请勿在主网使用真实资产</span>
+      </div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <header class="topbar">
+      <div class="container">
+        <div class="topbar-content">
           <div class="health-indicator" id="healthIndicator">
             <span class="status-dot"></span>
             <span class="status-text">检查中...</span>
@@ -33,187 +66,277 @@
           </button>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- 主内容区 -->
-  <main class="main">
-    <div class="container">
-      <!-- 状态栏 -->
-      <div class="status-bar" id="statusBar">
-        <div class="status-item">
-          <span class="label">Worker 状态:</span>
-          <span class="value" id="workerStatus">检查中...</span>
-        </div>
-        <div class="status-item">
-          <span class="label">扫描模式:</span>
-          <span class="value" id="scanMode">检查中...</span>
-        </div>
-        <div class="status-item">
-          <span class="label">最后更新:</span>
-          <span class="value" id="lastUpdate">--</span>
+    <!-- 主内容 -->
+    <main class="main" id="mainContent">
+      <!-- 机器人抢跑页面 -->
+      <div class="page" id="page-bot" data-page="bot">
+        <div class="container">
+          <!-- 状态栏 -->
+          <div class="status-bar" id="statusBar">
+            <div class="status-item">
+              <span class="label">Worker 状态:</span>
+              <span class="value" id="workerStatus">检查中...</span>
+            </div>
+            <div class="status-item">
+              <span class="label">扫描模式:</span>
+              <span class="value" id="scanMode">检查中...</span>
+            </div>
+            <div class="status-item">
+              <span class="label">最后更新:</span>
+              <span class="value" id="lastUpdate">--</span>
+            </div>
+          </div>
+
+          <!-- 被保护地址信息 -->
+          <section class="section">
+            <div class="section-header">
+              <h2>📍 被保护地址 A</h2>
+              <div class="section-actions">
+                <a href="https://amoy.polygonscan.com/address/0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939" target="_blank" class="btn btn-secondary">
+                  <span class="icon">🔍</span>
+                  Polygonscan
+                </a>
+              </div>
+            </div>
+            <div class="address-card">
+              <div class="address-info">
+                <div class="address-field">
+                  <span class="field-label">地址:</span>
+                  <span class="field-value" id="protectedAddress">0x32af...0939</span>
+                  <button class="btn-copy" data-copy="0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939">复制</button>
+                </div>
+                <div class="address-field">
+                  <span class="field-label">私钥:</span>
+                  <span class="field-value masked" id="protectedPrivateKey">0x70...fae6</span>
+                  <button class="btn-toggle" id="togglePrivateKey">显示</button>
+                  <button class="btn-copy" data-copy="<protected-wallet-private-key>">复制</button>
+                </div>
+              </div>
+              <div class="security-warning">
+                <span class="warning-icon">⚠️</span>
+                <span>此私钥用于演示，请勿在其他场景使用</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 余额显示 -->
+          <section class="section">
+            <div class="section-header">
+              <h2>💰 地址 A 余额</h2>
+              <div class="section-actions">
+                <a href="https://faucet.polygon.technology/" target="_blank" class="btn btn-primary">
+                  <span class="icon">💧</span>
+                  获取测试 POL
+                </a>
+              </div>
+            </div>
+            <div class="balance-grid" id="balanceGrid">
+              <div class="balance-card">
+                <div class="balance-label">XPD 余额</div>
+                <div class="balance-value" id="xpdBalance">--</div>
+                <div class="balance-token">XPD</div>
+              </div>
+              <div class="balance-card">
+                <div class="balance-label">POL 余额</div>
+                <div class="balance-value" id="polBalance">--</div>
+                <div class="balance-token">POL</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 测试操作区 -->
+          <section class="section">
+            <div class="section-header">
+              <h2>🧪 测试操作</h2>
+            </div>
+            <div class="test-actions">
+              <button class="btn btn-test btn-large" id="startTestBtn">
+                <span class="icon">🚀</span>
+                开始测试
+                <span class="btn-subtitle">从安全钱包转账 1 XPD 到地址 A</span>
+              </button>
+            </div>
+            <div class="test-instructions">
+              <h3>测试流程:</h3>
+              <ol>
+                <li>点击"开始测试"按钮，从安全钱包转账 1 XPD 到地址 A</li>
+                <li>导入地址 A 的私钥到钱包</li>
+                <li>尝试手动转移 XPD 到其他地址</li>
+                <li>对比启用/禁用应急模式的结果</li>
+              </ol>
+              <div class="test-warning">
+                <span class="warning-icon">⚠️</span>
+                <span>每次测试消耗约 0.01 POL 作为 Gas 费</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 应急模式控制 -->
+          <section class="section">
+            <div class="section-header">
+              <h2>🛡️ 应急模式控制</h2>
+            </div>
+            <div class="emergency-control" id="emergencyControl">
+              <div class="emergency-status">
+                <div class="status-badge" id="emergencyStatusBadge">常规模式</div>
+                <div class="scan-interval">
+                  <span class="icon">🔄</span>
+                  <span id="scanIntervalText">1分钟/次</span>
+                </div>
+              </div>
+              <div class="emergency-actions">
+                <button class="btn btn-danger btn-large" id="enableEmergencyBtn">
+                  <span class="icon">🚨</span>
+                  启动应急模式
+                  <span class="btn-subtitle">扫描间隔提升至 5 秒</span>
+                </button>
+                <button class="btn btn-success btn-large" id="disableEmergencyBtn" style="display: none;">
+                  <span class="icon">✅</span>
+                  关闭应急模式
+                  <span class="btn-subtitle">恢复 1 分钟扫描间隔</span>
+                </button>
+              </div>
+            </div>
+            <div class="emergency-description">
+              <p><strong>应急模式功能:</strong></p>
+              <ul>
+                <li>高频扫描：从 1 分钟提升至 5 秒</li>
+                <li>自动转移：检测到余额立即转移到安全地址 B</li>
+                <li>抢先保护：比人工操作更快响应</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- 应急状态列表 -->
+          <section class="section">
+            <div class="section-header">
+              <h2>🚨 应急状态</h2>
+            </div>
+            <div class="emergency-list" id="emergencyList">
+              <div class="loading">加载中...</div>
+            </div>
+          </section>
         </div>
       </div>
 
-      <!-- 被保护地址信息 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>📍 被保护地址 A</h2>
-          <div class="section-actions">
-            <a href="https://amoy.polygonscan.com/address/0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939" target="_blank" class="btn btn-secondary">
-              <span class="icon">🔍</span>
-              Polygonscan
-            </a>
+      <!-- 智能合约防盗币页面 -->
+      <div class="page" id="page-smart" data-page="smart" style="display: none;">
+        <div class="container">
+          <div class="empty-state">
+            <div class="empty-icon">🔒</div>
+            <h2>智能合约防盗币</h2>
+            <p>此功能正在开发中...</p>
+            <p>智能合约防盗币将提供更强的资产保护机制</p>
           </div>
         </div>
-        <div class="address-card">
-          <div class="address-info">
-            <div class="address-field">
-              <span class="field-label">地址:</span>
-              <span class="field-value" id="protectedAddress">0x32af...0939</span>
-              <button class="btn-copy" data-copy="0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939">复制</button>
+      </div>
+
+      <!-- 操作指南页面 -->
+      <div class="page" id="page-docs" data-page="docs" style="display: none;">
+        <div class="container">
+          <div class="docs-container">
+            <div class="docs-sidebar">
+              <h3>目录</h3>
+              <ul class="docs-toc">
+                <li><a href="#intro" class="toc-link">项目简介</a></li>
+                <li><a href="#quick-start" class="toc-link">快速开始</a></li>
+                <li><a href="#bot-guide" class="toc-link">机器人抢跑指南</a></li>
+                <li><a href="#smart-guide" class="toc-link">智能合约防盗币</a></li>
+                <li><a href="#faq" class="toc-link">常见问题</a></li>
+              </ul>
             </div>
-            <div class="address-field">
-              <span class="field-label">私钥:</span>
-              <span class="field-value masked" id="protectedPrivateKey">0x70...fae6</span>
-              <button class="btn-toggle" id="togglePrivateKey">显示</button>
-              <button class="btn-copy" data-copy="<protected-wallet-private-key>">复制</button>
-            </div>
-          </div>
-          <div class="security-warning">
-            <span class="warning-icon">⚠️</span>
-            <span>此私钥用于演示，请勿在其他场景使用</span>
-          </div>
-        </div>
-      </section>
+            <div class="docs-content">
+              <section id="intro" class="docs-section">
+                <h2>项目简介</h2>
+                <p>X-plan Demo 是一个资产保护演示平台，提供两种资产保护方式：</p>
+                <ul>
+                  <li><strong>机器人抢跑</strong>：通过 Cloudflare Worker 高频扫描，检测到资产流入时自动转移</li>
+                  <li><strong>智能合约防盗币</strong>：通过智能合约的权限控制，实现更强的资产保护</li>
+                </ul>
+              </section>
 
-      <!-- 余额显示 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>💰 地址 A 余额</h2>
-          <div class="section-actions">
-            <a href="https://faucet.polygon.technology/" target="_blank" class="btn btn-primary">
-              <span class="icon">💧</span>
-              获取测试 POL
-            </a>
-          </div>
-        </div>
-        <div class="balance-grid" id="balanceGrid">
-          <div class="balance-card">
-            <div class="balance-label">XPD 余额</div>
-            <div class="balance-value" id="xpdBalance">--</div>
-            <div class="balance-token">XPD</div>
-          </div>
-          <div class="balance-card">
-            <div class="balance-label">POL 余额</div>
-            <div class="balance-value" id="polBalance">--</div>
-            <div class="balance-token">POL</div>
-          </div>
-        </div>
-      </section>
+              <section id="quick-start" class="docs-section">
+                <h2>快速开始</h2>
+                <h3>1. 准备工作</h3>
+                <ul>
+                  <li>确保已连接到 Polygon Amoy 测试网</li>
+                  <li>准备一个 MetaMask 钱包</li>
+                  <li>获取测试 POL：https://faucet.polygon.technology/</li>
+                </ul>
+                <h3>2. 连接钱包</h3>
+                <p>点击官网的"连接钱包"按钮，完成 Web3 身份验证后即可访问演示页面。</p>
+              </section>
 
-      <!-- 测试操作区 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>🧪 测试操作</h2>
-        </div>
-        <div class="test-actions">
-          <button class="btn btn-test btn-large" id="startTestBtn">
-            <span class="icon">🚀</span>
-            开始测试
-            <span class="btn-subtitle">从安全钱包转账 1 XPD 到地址 A</span>
-          </button>
-        </div>
-        <div class="test-instructions">
-          <h3>测试流程:</h3>
-          <ol>
-            <li>点击"开始测试"按钮，从安全钱包转账 1 XPD 到地址 A</li>
-            <li>导入地址 A 的私钥到钱包</li>
-            <li>尝试手动转移 XPD 到其他地址</li>
-            <li>对比启用/禁用应急模式的结果</li>
-          </ol>
-          <div class="test-warning">
-            <span class="warning-icon">⚠️</span>
-            <span>每次测试消耗约 0.01 POL 作为 Gas 费</span>
-          </div>
-        </div>
-      </section>
+              <section id="bot-guide" class="docs-section">
+                <h2>机器人抢跑指南</h2>
+                <h3>工作原理</h3>
+                <p>机器人抢跑通过 Cloudflare Worker 实现高频扫描，当检测到被保护地址有资产流入时，立即将资产转移到安全地址。</p>
+                <h3>测试流程</h3>
+                <ol>
+                  <li>点击"开始测试"按钮</li>
+                  <li>从安全钱包转账 1 XPD 到被保护地址 A</li>
+                  <li>导入地址 A 的私钥到钱包</li>
+                  <li>尝试手动转移 XPD 到其他地址</li>
+                  <li>观察机器人是否抢先转移资产</li>
+                </ol>
+              </section>
 
-      <!-- 应急模式控制 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>🛡️ 应急模式控制</h2>
-        </div>
-        <div class="emergency-control" id="emergencyControl">
-          <div class="emergency-status">
-            <div class="status-badge" id="emergencyStatusBadge">常规模式</div>
-            <div class="scan-interval">
-              <span class="icon">🔄</span>
-              <span id="scanIntervalText">1分钟/次</span>
+              <section id="smart-guide" class="docs-section">
+                <h2>智能合约防盗币</h2>
+                <p>此功能正在开发中...</p>
+                <p>智能合约防盗币将提供更强的资产保护机制，通过合约级别的权限控制实现资产安全。</p>
+              </section>
+
+              <section id="faq" class="docs-section">
+                <h2>常见问题</h2>
+                <h3>Q: 为什么无法访问演示页面？</h3>
+                <p>A: 需要先在官网连接钱包，完成 Web3 身份验证后才能访问。</p>
+                <h3>Q: 机器人抢跑可以保护所有资产吗？</h3>
+                <p>A: 目前只支持 XPD 代币，后续会支持更多资产类型。</p>
+                <h3>Q: 智能合约防盗币何时上线？</h3>
+                <p>A: 正在开发中，敬请期待。</p>
+              </section>
             </div>
           </div>
-          <div class="emergency-actions">
-            <button class="btn btn-danger btn-large" id="enableEmergencyBtn">
-              <span class="icon">🚨</span>
-              启动应急模式
-              <span class="btn-subtitle">扫描间隔提升至 5 秒</span>
-            </button>
-            <button class="btn btn-success btn-large" id="disableEmergencyBtn" style="display: none;">
-              <span class="icon">✅</span>
-              关闭应急模式
-              <span class="btn-subtitle">恢复 1 分钟扫描间隔</span>
-            </button>
-          </div>
         </div>
-        <div class="emergency-description">
-          <p><strong>应急模式功能:</strong></p>
-          <ul>
-            <li>高频扫描：从 1 分钟提升至 5 秒</li>
-            <li>自动转移：检测到余额立即转移到安全地址 B</li>
-            <li>抢先保护：比人工操作更快响应</li>
-          </ul>
-        </div>
-      </section>
+      </div>
+    </main>
 
-      <!-- 应急状态列表 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>🚨 应急状态</h2>
+    <!-- 底部状态栏 -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <span class="version">v1.0.0</span>
+          <span class="separator">|</span>
+          <span class="network">Polygon Amoy Testnet</span>
+          <span class="separator">|</span>
+          <span class="copyright">© 2026 X-plan Demo</span>
         </div>
-        <div class="emergency-list" id="emergencyList">
-          <div class="loading">加载中...</div>
-        </div>
-      </section>
+      </div>
+    </footer>
+  </div>
 
-      <!-- API Key 管理 -->
-      <section class="section">
-        <div class="section-header">
-          <h2>🔑 API 密钥管理</h2>
+  <!-- API Key 管理（模态框） -->
+  <div class="modal" id="apiKeyModal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔑 API 密钥管理</h3>
+        <button class="modal-close" id="closeApiKeyModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="api-key-input">
+          <label for="apiKeyInput">API Key</label>
+          <input type="password" id="apiKeyInput" placeholder="输入 API Key">
+          <button class="btn btn-secondary" id="toggleApiKeyBtn">显示</button>
         </div>
-        <div class="api-key-card">
-          <div class="api-key-input">
-            <label for="apiKeyInput">API Key</label>
-            <input type="password" id="apiKeyInput" placeholder="输入 API Key">
-            <button class="btn btn-secondary" id="toggleApiKeyBtn">显示</button>
-          </div>
-          <button class="btn btn-primary" id="saveApiKeyBtn">保存</button>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- 底部状态栏 -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <span class="version">v1.0.0</span>
-        <span class="separator">|</span>
-        <span class="network">Polygon Amoy Testnet</span>
-        <span class="separator">|</span>
-        <span class="copyright">© 2026 X-plan Demo</span>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="saveApiKeyBtn">保存</button>
       </div>
     </div>
-  </footer>
+  </div>
 
   <!-- 加载遮罩 -->
   <div class="modal-overlay" id="loadingOverlay" style="display: none;">
@@ -229,6 +352,7 @@
   <script src="js/utils.js"></script>
   <script src="js/api.js"></script>
   <script src="js/components.js"></script>
+  <script src="js/sidebar.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

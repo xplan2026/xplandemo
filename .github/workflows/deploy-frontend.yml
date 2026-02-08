@@ -1,0 +1,123 @@
+name: Deploy Frontend to Ubuntu Server
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'frontend/official-site/**'
+      - 'frontend/DemoSite/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '部署环境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  build-official:
+    name: Build Official Site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        working-directory: ./frontend/official-site
+        run: npm ci
+
+      - name: Build official site
+        working-directory: ./frontend/official-site
+        run: npm run build
+
+      - name: Upload official site artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-site
+          path: frontend/official-site/dist
+
+  deploy-frontend:
+    name: Deploy to Ubuntu Server
+    runs-on: ubuntu-latest
+    needs: build-official
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download official site artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: official-site
+          path: ./frontend/official-site/dist
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 182.254.180.26 >> ~/.ssh/known_hosts
+
+      - name: Create deployment directories
+        run: |
+          ssh root@182.254.180.26 "mkdir -p /var/www/xplan-demo/official-site /var/www/xplan-demo/DemoSite"
+
+      - name: Deploy official site
+        run: |
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./frontend/official-site/dist/ \
+            root@182.254.180.26:/var/www/xplan-demo/official-site/
+
+      - name: Deploy DemoSite
+        run: |
+          rsync -avz --delete \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            ./frontend/DemoSite/ \
+            root@182.254.180.26:/var/www/xplan-demo/DemoSite/
+
+      - name: Set permissions
+        run: |
+          ssh root@182.254.180.26 \
+            "chown -R www-data:www-data /var/www/xplan-demo && chmod -R 755 /var/www/xplan-demo"
+
+      - name: Deploy Nginx config
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            ./server-configs/xplan-demo.conf \
+            root@182.254.180.26:/tmp/xplan-demo.conf
+
+      - name: Configure Nginx
+        run: |
+          ssh root@182.254.180.26 \
+            "mv /tmp/xplan-demo.conf /etc/nginx/sites-available/xplan-demo && \
+             ln -sf /etc/nginx/sites-available/xplan-demo /etc/nginx/sites-enabled/xplan-demo && \
+             nginx -t && systemctl reload nginx"
+
+      - name: Verify deployment
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://182.254.180.26:6060/health || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "�?部署验证成功"
+            echo "🌐 访问地址: http://182.254.180.26:6060"
+          else
+            echo "�?部署验证失败 (HTTP $HTTP_CODE)"
+            exit 1
+          fi
