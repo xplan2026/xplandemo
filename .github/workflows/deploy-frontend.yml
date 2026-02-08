@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: '部署环境'
+        description: '閮ㄧ讲鐜'
         required: true
         default: 'production'
         type: choice
@@ -71,18 +71,18 @@ jobs:
       - name: Add server to known hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 182.254.180.26 >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Create deployment directories
         run: |
-          ssh root@182.254.180.26 "mkdir -p /var/www/xplan-demo/official-site /var/www/xplan-demo/DemoSite"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /var/www/xplan-demo/official-site /var/www/xplan-demo/DemoSite"
 
       - name: Deploy official site
         run: |
           rsync -avz --delete \
             -e "ssh -o StrictHostKeyChecking=no" \
             ./frontend/official-site/dist/ \
-            root@182.254.180.26:/var/www/xplan-demo/official-site/
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/xplan-demo/official-site/
 
       - name: Deploy DemoSite
         run: |
@@ -91,33 +91,33 @@ jobs:
             --exclude 'node_modules' \
             --exclude '.git' \
             ./frontend/DemoSite/ \
-            root@182.254.180.26:/var/www/xplan-demo/DemoSite/
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/xplan-demo/DemoSite/
 
       - name: Set permissions
         run: |
-          ssh root@182.254.180.26 \
-            "chown -R www-data:www-data /var/www/xplan-demo && chmod -R 755 /var/www/xplan-demo"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "chown -R ${{ secrets.SSH_USER }}:www-data /var/www/xplan-demo && chmod -R 755 /var/www/xplan-demo"
 
       - name: Deploy Nginx config
         run: |
           scp -o StrictHostKeyChecking=no \
             ./server-configs/xplan-demo.conf \
-            root@182.254.180.26:/tmp/xplan-demo.conf
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/xplan-demo.conf
 
       - name: Configure Nginx
         run: |
-          ssh root@182.254.180.26 \
-            "mv /tmp/xplan-demo.conf /etc/nginx/sites-available/xplan-demo && \
-             ln -sf /etc/nginx/sites-available/xplan-demo /etc/nginx/sites-enabled/xplan-demo && \
-             nginx -t && systemctl reload nginx"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "sudo mv /tmp/xplan-demo.conf /etc/nginx/sites-available/xplan-demo && \
+             sudo ln -sf /etc/nginx/sites-available/xplan-demo /etc/nginx/sites-enabled/xplan-demo && \
+             sudo nginx -t && sudo systemctl reload nginx"
 
       - name: Verify deployment
         run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://182.254.180.26:6060/health || echo "000")
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SSH_HOST }}:6060/health || echo "000")
           if [ "$HTTP_CODE" = "200" ]; then
-            echo "�?部署验证成功"
-            echo "🌐 访问地址: http://182.254.180.26:6060"
+            echo "✅ 部署验证成功"
+            echo "🌐 访问地址: http://${{ secrets.SSH_HOST }}:6060"
           else
-            echo "�?部署验证失败 (HTTP $HTTP_CODE)"
+            echo "⚠️ 部署验证失败 (HTTP $HTTP_CODE)"
             exit 1
           fi
