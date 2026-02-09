@@ -77,14 +77,21 @@ jobs:
 
       - name: Deploy to staging server
         run: |
+          # 同步源代码到服务器
           rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./frontend/official-site/dist/ \
+            -e "ssh" \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            ./frontend/official-site/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/xplan-demo/official-site/
+
+          # 在服务器上执行构建
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd /var/www/xplan-demo/official-site && npm ci && npm run build"
 
           # 同步 DemoSite（静态文件）
           rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
+            -e "ssh" \
             --exclude 'node_modules' \
             --exclude '.git' \
             ./frontend/DemoSite/ \

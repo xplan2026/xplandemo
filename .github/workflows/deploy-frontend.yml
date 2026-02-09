@@ -78,12 +78,18 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /var/www/xplan-demo/official-site /var/www/xplan-demo/DemoSite"
 
-      - name: Deploy official site
+      - name: Deploy official site source code
         run: |
           rsync -avz --delete \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./frontend/official-site/dist/ \
+            -e "ssh" \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            ./frontend/official-site/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/xplan-demo/official-site/
+
+          # 在服务器上执行构建
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd /var/www/xplan-demo/official-site && npm ci && npm run build"
 
       - name: Deploy DemoSite
         run: |
@@ -101,7 +107,7 @@ jobs:
 
       - name: Deploy Nginx config
         run: |
-          scp -o StrictHostKeyChecking=no \
+          scp -e "ssh" \
             ./server-configs/xplan-demo.conf \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/xplan-demo.conf
 
