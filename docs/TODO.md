@@ -267,7 +267,7 @@
 - [Cloudflare Workers 文档](https://developers.cloudflare.com/workers/)
 - [ethers.js 文档](https://docs.ethers.org/)
 - [TDesign React](https://tdesign.tencent.com/react/overview)
-
+- [Pinme 文档](https://pinme.eth.limo/#/docs?id=getting-started)
 ---
 
 最后更新: 2026-02-07

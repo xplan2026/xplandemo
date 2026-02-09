@@ -1,0 +1,113 @@
+# 服务器环境安装 - 手动执行命令
+# 请复制以下命令到服务器终端执行
+# 服务器: 182.254.180.26
+# 用户: ubuntu
+
+# ========================================
+# 步骤 1: 安装 Node.js 20.x
+# ========================================
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 验证安装
+node --version
+npm --version
+
+# ========================================
+# 步骤 2: 安装 Wrangler CLI
+# ========================================
+sudo npm install -g wrangler@3.78.0
+
+# 验证安装
+wrangler --version
+
+# ========================================
+# 步骤 3: 安装 PM2
+# ========================================
+sudo npm install -g pm2@5.4.2
+
+# 验证安装
+pm2 --version
+
+# ========================================
+# 步骤 4: 安装 Hardhat
+# ========================================
+sudo npm install -g hardhat@2.22.0
+
+# 验证安装
+hardhat --version
+
+# ========================================
+# 步骤 5: 创建目录结构
+# ========================================
+sudo mkdir -p /var/www/xplan-official-site
+sudo mkdir -p /var/www/xplan-demosite
+sudo mkdir -p /opt/xplan
+sudo mkdir -p /opt/xplan/contracts
+sudo mkdir -p /opt/xplan/logs
+sudo mkdir -p /var/log/xplan
+
+# ========================================
+# 步骤 6: 设置目录权限
+# ========================================
+sudo chown -R ubuntu:www-data /var/www/
+sudo chmod -R 755 /var/www/
+
+sudo chown -R ubuntu:ubuntu /opt/xplan/
+sudo chmod -R 755 /opt/xplan/
+
+sudo chown -R ubuntu:ubuntu /var/log/xplan/
+sudo chmod -R 755 /var/log/xplan/
+
+# ========================================
+# 步骤 7: 配置 sudo 权限
+# ========================================
+sudo echo "ubuntu ALL=(ALL) NOPASSWD: /bin/systemctl" | sudo tee /etc/sudoers.d/90-ubuntu-systemctl
+sudo chmod 440 /etc/sudoers.d/90-ubuntu-systemctl
+
+# ========================================
+# 步骤 8: 启动 Nginx
+# ========================================
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+# ========================================
+# 步骤 9: 配置防火墙（可选）
+# ========================================
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw allow 6060/tcp  # Application
+
+# ========================================
+# 步骤 10: 验证安装
+# ========================================
+echo "========================================="
+echo "验证安装结果"
+echo "========================================="
+echo ""
+
+echo "已安装软件："
+which node && node --version || echo "Node.js: 未安装"
+which npm && npm --version || echo "npm: 未安装"
+which wrangler && wrangler --version || echo "Wrangler: 未安装"
+which nginx && nginx -v 2>&1 || echo "Nginx: 未安装"
+which pm2 && pm2 --version || echo "PM2: 未安装"
+which hardhat && hardhat --version || echo "Hardhat: 未安装"
+
+echo ""
+echo "目录权限："
+ls -la /var/www/ | grep xplan || echo "xplan 目录: 未创建"
+ls -la /opt/xplan/ 2>/dev/null || echo "opt/xplan 目录: 未创建"
+ls -la /var/log/xplan/ 2>/dev/null || echo "log/xplan 目录: 未创建"
+
+echo ""
+echo "Nginx 状态："
+sudo systemctl status nginx --no-pager | head -10
+
+echo ""
+echo "sudo 权限测试："
+sudo systemctl status nginx --no-pager | head -3
+
+echo ""
+echo "✅ 安装验证完成"
