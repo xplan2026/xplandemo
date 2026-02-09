@@ -1,9 +1,13 @@
 # Environment variables
+# 排除所有真实的 .env 文件
 .env
 .env.local
-.env.development
-.env.production
-.env.*
+.env.development.local
+.env.production.local
+.env.test.local
+
+# 保留 .env.example 模板文件
+!.env.example
 
 # Wrangler environment variables
 .dev.vars
