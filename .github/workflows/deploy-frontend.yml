@@ -3,10 +3,6 @@ name: Deploy Frontend to Ubuntu Server
 on:
   push:
     branches: [master, main]
-    paths:
-      - 'frontend/official-site/**'
-      - 'frontend/DemoSite/**'
-      - '.github/workflows/deploy-frontend.yml'
 
   workflow_dispatch:
     inputs:

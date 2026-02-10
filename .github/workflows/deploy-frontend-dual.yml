@@ -3,10 +3,6 @@ name: Deploy Frontend (Dual Mode)
 on:
   push:
     branches: [master, main]
-    paths:
-      - 'frontend/official-site/**'
-      - 'frontend/DemoSite/**'
-      - '.github/workflows/deploy-frontend-dual.yml'
 
   workflow_dispatch:
     inputs:
