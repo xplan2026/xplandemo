@@ -270,7 +270,7 @@ export class GasFunder {
         worker_id: this.workerId,
         wallet_address: data.target_wallet,
         tx_hash: data.tx_hash,
-        token_address: '0x0000000000000000000000000000000000000000', // BNB
+        token_address: '0x0000000000000000000000000000000000000000', // POL
         amount: data.amount || '0',
         status: data.tx_hash ? 'pending' : 'failed',
         error_message: data.error || null,

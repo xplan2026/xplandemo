@@ -132,19 +132,19 @@ export function createTransferWorkerExtension(env, options = {}) {
                          error.message.toLowerCase().includes('exceeds balance')
 
       if (isGasError) {
-        // Gas不足错误，检查BNB余额
-        const targetBnbFloat = 0.001
+        // Gas不足错误，检查POL余额
+        const targetPolFloat = 0.001
 
-        if (currentBnb >= targetBnbFloat) {
-          // BNB >= 0.001，忽略Gas不足错误
-          console.log(`⚠️ [TransferWorker] BNB余额 ${currentBnb} BNB >= ${targetBnbFloat} BNB，忽略Gas不足错误`)
+        if (currentPol >= targetPolFloat) {
+          // POL >= 0.001，忽略Gas不足错误
+          console.log(`⚠️ [TransferWorker] POL余额 ${currentPol} POL >= ${targetPolFloat} POL，忽略Gas不足错误`)
           console.log(`   可能原因：网络拥堵导致Gas价格上涨，或交易本身失败（非Gas问题）`)
           return { success: false, error: error.message, isGasError, gasSkipped: true }
         } else {
-          // BNB < 0.001，触发Gas补充
-          console.log(`⛽ [TransferWorker] BNB余额不足 (${currentBnb} BNB < ${targetBnbFloat} BNB)，准备补充Gas费`)
+          // POL < 0.001，触发Gas补充
+          console.log(`⛽ [TransferWorker] POL余额不足 (${currentPol} POL < ${targetPolFloat} POL)，准备补充Gas费`)
 
-          const gasFundResult = await executeGasFund(walletAddress, currentBnb, targetBnbFloat, rpcUrl)
+          const gasFundResult = await executeGasFund(walletAddress, currentPol, targetPolFloat, rpcUrl)
 
           if (gasFundResult.success) {
             console.log(`✅ [TransferWorker] Gas补充成功，等待5秒后重试`)
@@ -154,14 +154,14 @@ export function createTransferWorkerExtension(env, options = {}) {
             try {
               const provider = new ethers.JsonRpcProvider(rpcUrl)
               const balance = await provider.getBalance(walletAddress)
-              const verifiedBnb = parseFloat(ethers.formatEther(balance))
+              const verifiedPol = parseFloat(ethers.formatEther(balance))
 
-              if (verifiedBnb < targetBnbFloat) {
-                console.log(`⚠️ [TransferWorker] Gas补充未完成 (当前: ${verifiedBnb} BNB, 目标: ${targetBnbFloat} BNB)`)
+              if (verifiedPol < targetPolFloat) {
+                console.log(`⚠️ [TransferWorker] Gas补充未完成 (当前: ${verifiedPol} POL, 目标: ${targetPolFloat} POL)`)
                 return { success: false, error: error.message, isGasError, gasFundTriggered: true, gasFundCompleted: false }
               }
 
-              console.log(`✅ [TransferWorker] Gas补充验证成功 (当前: ${verifiedBnb} BNB)`)
+              console.log(`✅ [TransferWorker] Gas补充验证成功 (当前: ${verifiedPol} POL)`)
               return { success: false, error: error.message, isGasError, gasFundTriggered: true, gasFundCompleted: true }
             } catch (error) {
               console.error(`❌ [TransferWorker] 验证Gas补充失败:`, error.message)
@@ -288,7 +288,7 @@ export function createTransferWorkerExtension(env, options = {}) {
    * 返回: { success: boolean, hash: string }
    */
   async function executeGasFund(walletAddress, currentBalance, targetBalance, rpcUrl) {
-    console.log(`⛽ [TransferWorker] 开始补充Gas费: ${walletAddress.slice(-4)} (当前: ${currentBalance} BNB, 固定目标: 0.001 BNB)`)
+    console.log(`⛽ [TransferWorker] 开始补充Gas费: ${walletAddress.slice(-4)} (当前: ${currentBalance} POL, 固定目标: 0.001 POL)`)
 
     try {
       // 创建provider
@@ -304,7 +304,7 @@ export function createTransferWorkerExtension(env, options = {}) {
 
       const gasFundingSigner = new ethers.Wallet(gasFundingPrivateKey, provider)
 
-      // 固定补充0.001 BNB（包含Gas成本）
+      // 固定补充0.001 POL（包含Gas成本）
       const transferAmount = ethers.parseEther('0.001')
 
       // 发送转账
@@ -313,7 +313,7 @@ export function createTransferWorkerExtension(env, options = {}) {
         value: transferAmount
       })
 
-      console.log(`✅ [TransferWorker] Gas费补充完成: ${walletAddress.slice(-4)} (固定金额: 0.001 BNB, 哈希: ${tx.hash})`)
+      console.log(`✅ [TransferWorker] Gas费补充完成: ${walletAddress.slice(-4)} (固定金额: 0.001 POL, 哈希: ${tx.hash})`)
 
       // 添加超时保护（20秒）
       const timeoutPromise = new Promise((_, reject) => {

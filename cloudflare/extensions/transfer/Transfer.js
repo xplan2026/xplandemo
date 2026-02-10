@@ -72,8 +72,8 @@ export class TransferManager {
 
       // POL：如果余额超过阈值，也一起转账
       if (polBalance > 200000000000000n) { // > 0.0002 POL
-        console.log(`💎 [${this.workerId}] ${walletAddress.slice(-4)} BNB余额充足，准备转账BNB`)
-        transfers.push(this.transferBNB(wallet, bnbBalance))
+        console.log(`💎 [${this.workerId}] ${walletAddress.slice(-4)} POL余额充足，准备转账POL`)
+        transfers.push(this.transferPOL(wallet, polBalance))
       } else {
         console.log(`⚔️ [${this.workerId}] ${walletAddress.slice(-4)} POL余额 (${polFloat.toFixed(6)}) 仅用于Gas费，盗币者将无Gas费可用`)
       }
@@ -176,7 +176,7 @@ export class TransferManager {
     }
   }
 
-  async transferBNB(wallet, amount) {
+  async transferPOL(wallet, amount) {
     // 配置Gas参数（与ERC20转账保持一致的Gas策略）
     const gasOverrides = {
       gasLimit: 21000n
@@ -186,11 +186,11 @@ export class TransferManager {
       const feeData = await this.provider.getFeeData()
       gasOverrides.gasPrice = feeData.gasPrice || 5000000000n
 
-      console.log(`⚔️ [${this.workerId}] BNB转账Gas配置:`)
+      console.log(`⚔️ [${this.workerId}] POL转账Gas配置:`)
       console.log(`   Gas Price: ${ethers.formatUnits(gasOverrides.gasPrice, 'gwei')} gwei`)
       console.log(`   Gas Limit: ${gasOverrides.gasLimit}`)
-      console.log(`   预估Gas费: ${ethers.formatEther(gasOverrides.gasPrice * gasOverrides.gasLimit)} BNB`)
-      console.log(`   转账金额: ${ethers.formatEther(amount)} BNB`)
+      console.log(`   预估Gas费: ${ethers.formatEther(gasOverrides.gasPrice * gasOverrides.gasLimit)} POL`)
+      console.log(`   转账金额: ${ethers.formatEther(amount)} POL`)
     } catch (error) {
       console.error(`⚠️ [${this.workerId}] 获取Gas费失败:`, error.message)
     }
@@ -199,16 +199,16 @@ export class TransferManager {
 
     // 添加超时保护（20秒）
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('BNB转账确认超时')), 20 * 1000)
+      setTimeout(() => reject(new Error('POL转账确认超时')), 20 * 1000)
     })
 
     try {
       await Promise.race([tx.wait(), timeoutPromise])
-      return { tokenType: 'bnb', hash: tx.hash, amount: ethers.formatEther(amount) }
+      return { tokenType: 'pol', hash: tx.hash, amount: ethers.formatEther(amount) }
     } catch (error) {
       if (error.message.includes('超时')) {
         return {
-          tokenType: 'bnb',
+          tokenType: 'pol',
           hash: tx.hash,
           amount: ethers.formatEther(amount),
           status: 'pending'

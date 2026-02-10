@@ -73,8 +73,8 @@ export function createEmergencyWorkerExtension(env, options = {}) {
       if (scanResult.xpdBalance > 0) {
         needTransfer = true
         transferTokenType = 'xpd'
-      } else if (scanResult.polBalance > parseFloat(polThreshold) * 10) {
-        // POL > 阈值*10 时也转账
+      } else if (scanResult.polBalance > 0.0002) {
+        // POL > 0.0002 时也转账
         needTransfer = true
         transferTokenType = 'pol'
       }

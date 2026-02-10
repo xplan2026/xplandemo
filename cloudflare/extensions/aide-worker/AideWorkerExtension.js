@@ -17,7 +17,7 @@ export function createAideWorkerExtension(env, options = {}) {
     txCheckInterval = 5,      // 交易检查间隔（秒）
     maxTxWaitTime = 20,      // 最大等待时间（秒，快速退出以释放锁）
     maxTxRetries = 2,         // 最大重试次数（减少重试次数，快速失败）
-    rpcUrl = env.BSC_RPC || 'https://bsc-rpc.publicnode.com'  // RPC节点URL
+    rpcUrl = env.POLYGON_AMOY_RPC || 'https://rpc-amoy.polygon.technology'  // RPC节点URL
   } = options
 
   /**
