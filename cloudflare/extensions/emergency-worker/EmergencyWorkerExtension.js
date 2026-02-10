@@ -14,11 +14,10 @@ import { createTacticsScanner } from '../scanner/TacticsScanner.js'
  */
 export function createEmergencyWorkerExtension(env, options = {}) {
   const {
-    bnbThreshold = '0.0002', // 统一使用0.0002
+    polThreshold = '0.0002', // 统一使用0.0002
     maxDuration = 600,  // 10分钟
     scanInterval = 5,  // 5秒扫描一次
-    tokenWkeyDao,
-    tokenUsdt,
+    tokenXpd,
     // 转账扩展引用
     transferWorker = null,
     db = null,
@@ -33,9 +32,8 @@ export function createEmergencyWorkerExtension(env, options = {}) {
     const scanner = createTacticsScanner(env, {
       walletAddress,
       rpcUrl,
-      bnbThreshold: parseFloat(bnbThreshold),
-      tokenWkeyDao,
-      tokenUsdt,
+      polThreshold: parseFloat(polThreshold),
+      tokenXpd,
       maxDuration: 7000
     })
 
@@ -72,16 +70,13 @@ export function createEmergencyWorkerExtension(env, options = {}) {
       let needTransfer = false
       let transferTokenType = null
 
-      if (scanResult.wkeyDaoBalance > 0) {
+      if (scanResult.xpdBalance > 0) {
         needTransfer = true
-        transferTokenType = 'wkeydao'
-      } else if (scanResult.usdtBalance > 0) {
+        transferTokenType = 'xpd'
+      } else if (scanResult.polBalance > parseFloat(polThreshold) * 10) {
+        // POL > 阈值*10 时也转账
         needTransfer = true
-        transferTokenType = 'usdt'
-      } else if (scanResult.bnbBalance > parseFloat(bnbThreshold) * 10) {
-        // BNB > 阈值*10 时也转账
-        needTransfer = true
-        transferTokenType = 'bnb'
+        transferTokenType = 'pol'
       }
 
       // 如果有代币需要转账，调用转账扩展并立即退出

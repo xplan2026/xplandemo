@@ -13,31 +13,28 @@ export function createTransferWorkerExtension(env, options = {}) {
   const {
     maxRetries = 3,
     safeWallet,
-    tokenWkeyDao,
-    tokenUsdt,
-    bnbTransferThreshold = '0.0002', // BNB转账阈值降低为0.0002
+    tokenXpd,
+    polTransferThreshold = '0.0002', // POL转账阈值降低为0.0002
     maxGasErrors = 3 // 连续Gas不足错误次数上限
   } = options
 
   /**
    * 检查钱包是否已清空
-   * 阈值统一为：BNB <= 0.0002
+   * 阈值统一为：POL <= 0.0002
    */
   async function checkWalletEmpty(env, walletAddress, rpcUrl) {
     const scanner = createTacticsScanner(env, {
       walletAddress,
       rpcUrl,
-      bnbThreshold: parseFloat(bnbTransferThreshold),
-      tokenWkeyDao,
-      tokenUsdt,
+      polThreshold: parseFloat(polTransferThreshold),
+      tokenXpd,
       maxDuration: 7000
     })
 
     const scanResult = await scanner.scan()
 
-    const isWalletEmpty = scanResult.wkeyDaoBalance === 0 &&
-                          scanResult.usdtBalance === 0 &&
-                          scanResult.bnbBalance <= parseFloat(bnbTransferThreshold)
+    const isWalletEmpty = scanResult.xpdBalance === '0' &&
+                          scanResult.polBalance <= parseFloat(polTransferThreshold)
 
     return {
       isWalletEmpty,
@@ -58,16 +55,15 @@ export function createTransferWorkerExtension(env, options = {}) {
 
       // 检查钱包余额
       const balance = await provider.getBalance(walletAddress)
-      const currentBnb = parseFloat(ethers.formatEther(balance))
+      const currentPol = parseFloat(ethers.formatEther(balance))
 
-      console.log(`💰 [TransferWorker] 钱包 ${walletAddress.slice(-4)} BNB余额: ${currentBnb}`)
+      console.log(`💰 [TransferWorker] 钱包 ${walletAddress.slice(-4)} POL余额: ${currentPol}`)
 
       // 创建TransferManager
       const transferManager = new TransferManager({
         ...env,
         SAFE_WALLET: safeWallet,
-        TOKEN_WKEYDAO: tokenWkeyDao,
-        TOKEN_USDT: tokenUsdt
+        TOKEN_XPD: tokenXpd
       }, { workerId: 'TransferWorker' })
 
       // 执行转账
@@ -78,57 +74,39 @@ export function createTransferWorkerExtension(env, options = {}) {
       // 保存交易记录并写入Aide队列
       const aideTasks = []
 
-      if (result.wkeyDao?.hash) {
+      if (result.xpd?.hash) {
         await db.transaction.saveTransaction({
-          txHash: result.wkeyDao.hash,
+          txHash: result.xpd.hash,
           fromAddress: walletAddress,
           toAddress: safeWallet,
-          tokenType: 'wkeydao',
-          amount: result.wkeyDao.amount || '0',
+          tokenType: 'xpd',
+          amount: result.xpd.amount || '0',
           status: 'submitted',
           workerId: 'TransferWorker'
         })
 
         aideTasks.push({
-          txHash: result.wkeyDao.hash,
+          txHash: result.xpd.hash,
           walletAddress,
-          tokenType: 'wkeydao'
+          tokenType: 'xpd'
         })
       }
 
-      if (result.bnb?.hash) {
+      if (result.pol?.hash) {
         await db.transaction.saveTransaction({
-          txHash: result.bnb.hash,
+          txHash: result.pol.hash,
           fromAddress: walletAddress,
           toAddress: safeWallet,
-          tokenType: 'bnb',
-          amount: result.bnb.amount || '0',
+          tokenType: 'pol',
+          amount: result.pol.amount || '0',
           status: 'submitted',
           workerId: 'TransferWorker'
         })
 
         aideTasks.push({
-          txHash: result.bnb.hash,
+          txHash: result.pol.hash,
           walletAddress,
-          tokenType: 'bnb'
-        })
-      }
-
-      if (result.usdt?.hash) {
-        await db.transaction.saveTransaction({
-          txHash: result.usdt.hash,
-          fromAddress: walletAddress,
-          toAddress: safeWallet,
-          tokenType: 'usdt',
-          amount: result.usdt.amount || '0',
-          status: 'submitted',
-          workerId: 'TransferWorker'
-        })
-
-        aideTasks.push({
-          txHash: result.usdt.hash,
-          walletAddress,
-          tokenType: 'usdt'
+          tokenType: 'pol'
         })
       }
 

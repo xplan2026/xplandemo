@@ -53,46 +53,39 @@ export class TransferManager {
 
   async emergencyTransfer(walletAddress) {
     const wallet = this.getWallet(walletAddress)
-    const result = { success: true, wkeyDao: null, usdt: null, bnb: null }
+    const result = { success: true, xpd: null, pol: null }
 
     try {
       const transfers = []
 
-      // 获取BNB余额
-      const bnbBalance = await this.provider.getBalance(wallet)
-      const bnbFloat = parseFloat(ethers.formatEther(bnbBalance))
+      // 获取POL余额
+      const polBalance = await this.provider.getBalance(wallet)
+      const polFloat = parseFloat(ethers.formatEther(polBalance))
 
-      console.log(`🚀 [${this.workerId}] ${walletAddress.slice(-4)} BNB余额: ${bnbFloat.toFixed(6)} BNB`)
+      console.log(`🚀 [${this.workerId}] ${walletAddress.slice(-4)} POL余额: ${polFloat.toFixed(6)} POL`)
 
-      // wkeyDAO
-      const wkeyDaoBalance = await this.getERC20Balance(this.tokenWkeyDao, walletAddress)
-      if (wkeyDaoBalance > 0n) {
-        transfers.push(this.transferERC20(wallet, this.tokenWkeyDao, wkeyDaoBalance, bnbBalance))
+      // XPD
+      const xpdBalance = await this.getERC20Balance(this.xpdToken, walletAddress)
+      if (xpdBalance > 0n) {
+        transfers.push(this.transferERC20(wallet, this.xpdToken, xpdBalance, polBalance))
       }
 
-      // USDT
-      const usdtBalance = await this.getERC20Balance(this.tokenUsdt, walletAddress)
-      if (usdtBalance > 0n) {
-        transfers.push(this.transferERC20(wallet, this.tokenUsdt, usdtBalance, bnbBalance))
-      }
-
-      // BNB：如果余额超过阈值，也一起转账
-      if (bnbBalance > 200000000000000n) { // > 0.0002 BNB
+      // POL：如果余额超过阈值，也一起转账
+      if (polBalance > 200000000000000n) { // > 0.0002 POL
         console.log(`💎 [${this.workerId}] ${walletAddress.slice(-4)} BNB余额充足，准备转账BNB`)
         transfers.push(this.transferBNB(wallet, bnbBalance))
       } else {
-        console.log(`⚔️ [${this.workerId}] ${walletAddress.slice(-4)} BNB余额 (${bnbFloat.toFixed(6)}) 仅用于Gas费，盗币者将无Gas费可用`)
+        console.log(`⚔️ [${this.workerId}] ${walletAddress.slice(-4)} POL余额 (${polFloat.toFixed(6)}) 仅用于Gas费，盗币者将无Gas费可用`)
       }
 
-      // 串行执行转账（避免BNB转账与ERC20转账的Gas竞争）
+      // 串行执行转账（避免POL转账与ERC20转账的Gas竞争）
       let hasFailures = false
       if (transfers.length > 0) {
         for (const transfer of transfers) {
           try {
             const txResult = await transfer
-            if (txResult.tokenType === 'wkeydao') result.wkeyDao = txResult
-            else if (txResult.tokenType === 'usdt') result.usdt = txResult
-            else if (txResult.tokenType === 'bnb') result.bnb = txResult
+            if (txResult.tokenType === 'xpd') result.xpd = txResult
+            else if (txResult.tokenType === 'pol') result.pol = txResult
           } catch (error) {
             console.error(`❌ [${this.workerId}] 转账失败:`, error.message)
             hasFailures = true
@@ -110,25 +103,25 @@ export class TransferManager {
     }
   }
 
-  async transferERC20(wallet, tokenAddress, amount, totalBnbBalance) {
+  async transferERC20(wallet, tokenAddress, amount, totalPolBalance) {
     const contract = new ethers.Contract(tokenAddress, [
       "function balanceOf(address) view returns (uint256)",
       "function transfer(address, uint256) returns (bool)"
     ], wallet)
 
-    const tokenType = tokenAddress.toLowerCase() === this.tokenWkeyDao.toLowerCase() ? 'wkeydao' : 'usdt'
+    const tokenType = tokenAddress.toLowerCase() === this.xpdToken.toLowerCase() ? 'xpd' : 'pol'
 
-    // 使用所有BNB作为Gas费：简单直接，先发制人
+    // 使用所有POL作为Gas费：简单直接，先发制人
     let gasOverrides = {}
-    if (totalBnbBalance > 0n) {
+    if (totalPolBalance > 0n) {
       try {
         // 估算Gas Limit
         const estimatedGas = await contract.transfer.estimateGas(this.safeWallet, amount, { from: wallet.address })
         const safeEstimatedGas = estimatedGas > 0n ? estimatedGas : 65000n
 
-        // 计算最大可用Gas Price（全部BNB余额 / 估算Gas）
-        // 移除基础Gas Price下限，无论余额多少都使用全部BNB
-        const calculatedGasPrice = totalBnbBalance / safeEstimatedGas
+        // 计算最大可用Gas Price（全部POL余额 / 估算Gas）
+        // 移除基础Gas Price下限，无论余额多少都使用全部POL
+        const calculatedGasPrice = totalPolBalance / safeEstimatedGas
 
         gasOverrides = {
           gasLimit: safeEstimatedGas,
@@ -137,10 +130,10 @@ export class TransferManager {
 
         console.log(`⚔️ [${this.workerId}] 先发制人Gas配置:`)
         console.log(`   代币: ${tokenType}`)
-        console.log(`   总BNB余额: ${ethers.formatEther(totalBnbBalance)} BNB`)
+        console.log(`   总POL余额: ${ethers.formatEther(totalPolBalance)} POL`)
         console.log(`   Gas Price: ${ethers.formatUnits(gasOverrides.gasPrice, 'gwei')} gwei`)
         console.log(`   Gas Limit: ${gasOverrides.gasLimit}`)
-        console.log(`   预估Gas费: ${ethers.formatEther(gasOverrides.gasPrice * gasOverrides.gasLimit)} BNB`)
+        console.log(`   预估Gas费: ${ethers.formatEther(gasOverrides.gasPrice * gasOverrides.gasLimit)} POL`)
       } catch (error) {
         console.error(`⚠️ [${this.workerId}] Gas配置失败，使用默认设置:`, error.message)
       }

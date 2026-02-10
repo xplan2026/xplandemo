@@ -44,6 +44,116 @@ const CONFIG = {
 // ==================== 工具函数 ====================
 
 /**
+ * 创建简化的分布式锁（适配单钱包场景）
+ * 使用 KV 存储实现分布式锁
+ */
+function createDistributedLock(env, db) {
+  const LOCK_PREFIX = 'lock:'
+  const DEFAULT_TTL = 600 // 10分钟
+
+  return {
+    /**
+     * 获取锁
+     * @param {string} key - 锁的键
+     * @param {number} ttl - 锁的存活时间（秒）
+     */
+    async acquireLock(key, ttl = DEFAULT_TTL) {
+      try {
+        const lockKey = LOCK_PREFIX + key
+        const lockValue = `${WORKER_ID}:${Date.now()}`
+        const expiresAt = Date.now() + (ttl * 1000)
+
+        // 使用 KV 的 put 方法设置锁（仅当锁不存在时）
+        await env.RPC_POOL.put(lockKey, lockValue, {
+          expirationTtl: ttl
+        })
+
+        // 验证锁是否成功获取
+        const currentValue = await env.RPC_POOL.get(lockKey)
+        if (currentValue === lockValue) {
+          console.log(`🔒 [Lock] 成功获取锁: ${key}`)
+          return { success: true, workerId: WORKER_ID, expiresAt }
+        }
+
+        // 获取失败，返回锁的状态
+        const parts = currentValue ? currentValue.split(':') : []
+        const owner = parts[0] || 'unknown'
+        const timestamp = parts[1] ? parseInt(parts[1]) : Date.now()
+
+        return {
+          success: false,
+          workerId: owner,
+          timestamp,
+          ttl: (timestamp + ttl * 1000) - Date.now(),
+          remaining: Math.max(0, (timestamp + ttl * 1000) - Date.now())
+        }
+      } catch (error) {
+        console.error(`❌ [Lock] 获取锁失败: ${key}`, error.message)
+        return { success: false, error: error.message }
+      }
+    },
+
+    /**
+     * 释放锁
+     * @param {string} key - 锁的键
+     */
+    async releaseLock(key) {
+      try {
+        const lockKey = LOCK_PREFIX + key
+        const currentValue = await env.RPC_POOL.get(lockKey)
+
+        // 检查锁是否属于当前 Worker
+        if (currentValue && currentValue.startsWith(WORKER_ID)) {
+          await env.RPC_POOL.delete(lockKey)
+          console.log(`🔓 [Lock] 成功释放锁: ${key}`)
+          return { success: true }
+        }
+
+        // 锁不存在或不属于当前 Worker
+        return {
+          success: false,
+          error: currentValue ? 'Lock owned by another worker' : 'Lock not found'
+        }
+      } catch (error) {
+        console.error(`❌ [Lock] 释放锁失败: ${key}`, error.message)
+        return { success: false, error: error.message }
+      }
+    },
+
+    /**
+     * 检查锁的状态
+     * @param {string} key - 锁的键
+     */
+    async checkLock(key) {
+      try {
+        const lockKey = LOCK_PREFIX + key
+        const currentValue = await env.RPC_POOL.get(lockKey)
+
+        if (!currentValue) {
+          return { locked: false }
+        }
+
+        const parts = currentValue.split(':')
+        const workerId = parts[0] || 'unknown'
+        const timestamp = parts[1] ? parseInt(parts[1]) : Date.now()
+        const remaining = (timestamp + DEFAULT_TTL * 1000) - Date.now()
+
+        return {
+          locked: true,
+          workerId,
+          timestamp,
+          ttl: DEFAULT_TTL * 1000,
+          remaining: Math.max(0, remaining)
+        }
+      } catch (error) {
+        console.error(`❌ [Lock] 检查锁状态失败: ${key}`, error.message)
+        return { locked: false, error: error.message }
+      }
+    }
+  }
+}
+
+/**
  * 解析环境变量
  */
 function parseConfig(env) {
@@ -259,9 +369,7 @@ async function executeTransfer(env, walletAddress, tokenType, db, rpcUrl) {
     maxRetries: CONFIG.MAX_TRANSFER_RETRIES,
     maxGasErrors: CONFIG.MAX_GAS_ERRORS,
     safeWallet: CONFIG.SAFE_WALLET,
-    tokenXpd: CONFIG.TOKEN_XPD,
-    gasFundingWallet: CONFIG.GAS_FUNDING_WALLET,
-    competitiveMode: CONFIG.COMPETITIVE_MODE
+    tokenXpd: CONFIG.TOKEN_XPD
   })
 
   return await transferWorker.runTransferLoop(walletAddress, tokenType, db, rpcUrl)

@@ -60,7 +60,7 @@ export class TacticsScanner {
    * 获取随机provider URL
    */
   _getProviderUrl() {
-    return this.providers[0] || 'https://bsc-rpc.publicnode.com'
+    return this.providers[0] || 'https://rpc-amoy.polygon.technology'
   }
 
   /**
@@ -81,7 +81,7 @@ export class TacticsScanner {
   }
 
   /**
-   * 获取BNB余额（带重试）
+   * 获取POL余额（带重试）
    */
   async getBalanceWithRetry(walletAddress) {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -90,7 +90,7 @@ export class TacticsScanner {
         const balance = await provider.getBalance(walletAddress)
         return balance
       } catch (error) {
-        console.warn(`[${this.workerId}] BNB余额查询失败（第${attempt + 1}次）:`, error.message)
+        console.warn(`[${this.workerId}] POL余额查询失败（第${attempt + 1}次）:`, error.message)
 
         // 失败后切换到下一个 provider
         if (attempt === 0) {
@@ -100,7 +100,7 @@ export class TacticsScanner {
         }
 
         if (attempt === 1) {
-          throw new Error(`BNB余额查询失败（重试后仍失败）: ${error.message}`)
+          throw new Error(`POL余额查询失败（重试后仍失败）: ${error.message}`)
         }
       }
     }
@@ -144,11 +144,10 @@ export class TacticsScanner {
     try {
       console.log(`🔍 [${this.workerId}] 开始扫描...`)
 
-      // 并行查询BNB、wkeyDAO和USDT余额，添加6秒超时保护
+      // 并行查询POL和XPD余额，添加6秒超时保护
       const scanPromise = Promise.all([
         this.getBalanceWithRetry(this.walletAddress),
-        this.getERC20WithRetry(this.wkeyDaoToken),
-        this.getERC20WithRetry(this.usdtToken)
+        this.getERC20WithRetry(this.xpdToken)
       ])
 
       const timeoutPromise = new Promise((_, reject) =>
@@ -168,27 +167,23 @@ export class TacticsScanner {
         throw result.error
       }
 
-      const [bnbBalance, wkeyDaoBalance, usdtBalance] = result
+      const [polBalance, xpdBalance] = result
 
-      const bnbFormatted = ethers.formatEther(bnbBalance)
-      const wkeyDaoFormatted = ethers.formatUnits(wkeyDaoBalance, 18)
-      const usdtFormatted = ethers.formatUnits(usdtBalance, 18)
+      const polFormatted = ethers.formatEther(polBalance)
+      const xpdFormatted = ethers.formatUnits(xpdBalance, this.xpdDecimals)
 
       console.log(`📊 [${this.workerId}] 扫描结果:`, {
-        BNB: bnbFormatted,
-        wkeyDAO: wkeyDaoFormatted,
-        USDT: usdtFormatted
+        POL: polFormatted,
+        XPD: xpdFormatted
       })
 
       return {
         wallet: this.walletAddress,
         walletShort: this.walletShort,
-        bnbBalance: bnbFormatted,
-        wkeyDaoBalance: wkeyDaoFormatted,
-        usdtBalance: usdtFormatted,
-        bnbBalanceRaw: bnbBalance,
-        wkeyDaoBalanceRaw: wkeyDaoBalance,
-        usdtBalanceRaw: usdtBalance
+        polBalance: polFormatted,
+        xpdBalance: xpdFormatted,
+        polBalanceRaw: polBalance,
+        xpdBalanceRaw: xpdBalance
       }
     } catch (error) {
       // CPU超限错误特殊处理
@@ -207,36 +202,25 @@ export class TacticsScanner {
    * @returns {Object} { action: string, reason: string, token?: string }
    */
   checkAction(scanResult) {
-    const wkeyDaoBalance = parseFloat(scanResult.wkeyDaoBalance || '0')
-    const usdtBalance = parseFloat(scanResult.usdtBalance || '0')
-    const bnbBalance = parseFloat(scanResult.bnbBalance || '0')
+    const xpdBalance = parseFloat(scanResult.xpdBalance || '0')
+    const polBalance = parseFloat(scanResult.polBalance || '0')
 
-    // 规则1: wkeyDAO>0，立即转账
-    if (wkeyDaoBalance > 0) {
-      console.log(`💰 [${this.workerId}] 检测到wkeyDAO余额>0，触发转账: ${wkeyDaoBalance}`)
+    // 规则1: XPD>0，立即转账
+    if (xpdBalance > 0) {
+      console.log(`💰 [${this.workerId}] 检测到XPD余额>0，触发转账: ${xpdBalance}`)
       return {
         action: 'transfer',
-        token: 'wkeydao',
-        reason: 'wkeydao_balance_gt_zero'
+        token: 'xpd',
+        reason: 'xpd_balance_gt_zero'
       }
     }
 
-    // 规则2: USDT>0，立即转账
-    if (usdtBalance > 0) {
-      console.log(`💰 [${this.workerId}] 检测到USDT余额>0，触发转账: ${usdtBalance}`)
-      return {
-        action: 'transfer',
-        token: 'usdt',
-        reason: 'usdt_balance_gt_zero'
-      }
-    }
-
-    // 规则3: BNB>0.001，触发应急状态
-    if (bnbBalance > this.bnbThreshold) {
-      console.log(`🚨 [${this.workerId}] 检测到BNB余额>${this.bnbThreshold}，触发应急状态`)
+    // 规则2: POL>阈值，触发应急状态
+    if (polBalance > this.polThreshold) {
+      console.log(`🚨 [${this.workerId}] 检测到POL余额>${this.polThreshold}，触发应急状态`)
       return {
         action: 'emergency',
-        reason: 'bnb_balance_exceeds_threshold'
+        reason: 'pol_balance_exceeds_threshold'
       }
     }
 

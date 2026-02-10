@@ -239,14 +239,12 @@ export function createAideWorkerExtension(env, options = {}) {
     if (!db || !db.system) return { total: 0 }
 
     try {
-      const { count, error } = await db.supabase
-        .from('system_errors')
-        .select('*', { count: 'exact', head: true })
-        .gt('timestamp', new Date(Date.now() - 3600000).toISOString()) // 最近1小时
+      const response = await db.fetchSupabase(
+        `system_errors?select=count&timestamp=gt.${new Date(Date.now() - 3600000).toISOString()}`
+      )
+      const data = await response.json()
 
-      if (error) throw error
-
-      return { total: count || 0 }
+      return { total: data[0]?.count || 0 }
     } catch (error) {
       console.error(`❌ [AideWorker] 获取错误数量失败:`, error.message)
       return { total: 0 }
@@ -261,13 +259,10 @@ export function createAideWorkerExtension(env, options = {}) {
     if (!db || !db.system) return { errors: [] }
 
     try {
-      const { data, error } = await db.supabase
-        .from('system_errors')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(limit)
-
-      if (error) throw error
+      const response = await db.fetchSupabase(
+        `system_errors?select=*&order=timestamp.desc&limit=${limit}`
+      )
+      const data = await response.json()
 
       return { errors: data || [] }
     } catch (error) {
@@ -286,15 +281,17 @@ export function createAideWorkerExtension(env, options = {}) {
     try {
       const cutoffTime = new Date(Date.now() - olderThanHours * 3600000).toISOString()
 
-      const { error, count } = await db.supabase
-        .from('system_errors')
-        .delete()
-        .lt('timestamp', cutoffTime)
+      const response = await db.fetchSupabase(
+        `system_errors?timestamp=lt.${cutoffTime}`,
+        { method: 'DELETE' }
+      )
 
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error(`删除失败: ${response.status}`)
+      }
 
-      console.log(`✅ [AideWorker] 清理了 ${count || 0} 条旧错误记录`)
-      return { total: count || 0 }
+      console.log(`✅ [AideWorker] 清理了旧错误记录`)
+      return { total: 0 } // Supabase REST API 不返回删除数量
     } catch (error) {
       console.error(`❌ [AideWorker] 清理旧错误失败:`, error.message)
       return { total: 0 }
