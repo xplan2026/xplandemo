@@ -60,6 +60,18 @@
             <span class="status-dot"></span>
             <span class="status-text">检查中...</span>
           </div>
+          <div class="user-stats" id="userStats">
+            <span class="user-stat-item">
+              <span class="stat-icon">👥</span>
+              <span class="stat-label">登录用户:</span>
+              <span class="stat-value" id="realUserCount">--</span>
+            </span>
+            <span class="user-stat-item">
+              <span class="stat-icon">🧪</span>
+              <span class="stat-label">测试用户:</span>
+              <span class="stat-value" id="testUserCount">--</span>
+            </span>
+          </div>
           <button class="btn btn-secondary" id="refreshBtn">
             <span class="icon">↻</span>
             刷新
@@ -108,7 +120,7 @@
                   <button class="btn-copy" data-copy="0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939">复制</button>
                 </div>
                 <div class="address-field">
-                  <span class="field-label">私钥:</span>
+                  <span class="field-label">演示私钥:</span>
                   <span class="field-value masked" id="protectedPrivateKey">0x70...fae6</span>
                   <button class="btn-toggle" id="togglePrivateKey">显示</button>
                   <button class="btn-copy" data-copy="<protected-wallet-private-key>">复制</button>
@@ -116,7 +128,7 @@
               </div>
               <div class="security-warning">
                 <span class="warning-icon">⚠️</span>
-                <span>此私钥用于演示，请勿在其他场景使用</span>
+                <span>此私钥仅用于演示测试，钱包中无真实资产</span>
               </div>
             </div>
           </section>
@@ -162,10 +174,46 @@
               <h3>测试流程:</h3>
               <ol>
                 <li>点击"开始测试"按钮，从安全钱包转账 1 XPD 到地址 A</li>
-                <li>导入地址 A 的私钥到钱包</li>
-                <li>尝试手动转移 XPD 到其他地址</li>
+                <li>使用下方的"模拟私钥导入"功能，将演示私钥粘贴到表单中</li>
+                <li>点击"模拟转账"，测试防盗币功能</li>
                 <li>对比启用/禁用应急模式的结果</li>
               </ol>
+              <div class="test-warning important">
+                <span class="warning-icon">🚨</span>
+                <span><strong>重要提示：</strong>请使用下方表单进行测试，<strong>不要</strong>将私钥导入到您的真实钱包中！</span>
+              </div>
+            </div>
+
+            <!-- 模拟私钥导入表单 -->
+            <div class="test-form">
+              <h3>🔐 模拟私钥导入（安全测试）</h3>
+              <p class="form-description">
+                复制上方的演示私钥，粘贴到此处进行测试。此方式不会将私钥导入到您的钱包，安全性更高。
+              </p>
+              <div class="form-group">
+                <label for="testPrivateKey">演示私钥</label>
+                <input
+                  type="password"
+                  id="testPrivateKey"
+                  class="input-field"
+                  placeholder="粘贴演示私钥..."
+                  autocomplete="off"
+                >
+                <button class="btn btn-secondary btn-sm" id="toggleTestKeyBtn">显示</button>
+              </div>
+              <div class="form-group">
+                <label for="testTargetAddress">目标地址</label>
+                <input
+                  type="text"
+                  id="testTargetAddress"
+                  class="input-field"
+                  placeholder="0x..."
+                >
+              </div>
+              <button class="btn btn-primary" id="simulateTransferBtn">
+                <span class="icon">💸</span>
+                模拟转账
+              </button>
               <div class="test-warning">
                 <span class="warning-icon">⚠️</span>
                 <span>每次测试消耗约 0.01 POL 作为 Gas 费</span>

@@ -12,6 +12,8 @@
 # Wrangler environment variables
 .dev.vars
 **/.dev.vars
+.env.local.wrangler
+**/.env.local.wrangler
 
 # Node modules
 node_modules/

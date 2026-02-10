@@ -3,6 +3,8 @@ main = "src/index.js"
 compatibility_date = "2025-01-16"
 account_id = "1b9f2ccbdc655cf10384c9ef205b6eab"
 
+# Workers.dev 子域名（自动生成: https://tactics-1.workers.dev）
+
 # Cron Trigger: 每分钟执行
 [triggers]
 crons = ["* * * * *"]
@@ -10,8 +12,8 @@ crons = ["* * * * *"]
 # KV命名空间绑定（用于RPC节点池）
 [[kv_namespaces]]
 binding = "RPC_POOL"
-id = ""
-preview_id = ""
+id = "b818a02cb522444d9d6164f472c0f3f7"
+preview_id = "a71c0c8beeb64919bb601cc245090814"
 
 # 可观测性配置
 [observability]

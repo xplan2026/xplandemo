@@ -1,8 +1,8 @@
 {
-  "name": "worker-integrated-pool",
+  "name": "tactics-1",
   "version": "2.4.0",
-  "description": "Worker-Integrated-Pool: 集成池扫描机器人 (v2.4.0) - 主账号",
-  "author": "",
+  "description": "X-plan Tactics-1 Worker - 资产保护模拟演示",
+  "author": "X-plan Team",
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",

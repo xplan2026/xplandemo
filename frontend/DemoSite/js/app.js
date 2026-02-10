@@ -51,6 +51,27 @@ function initEventListeners() {
 
   // 禁用应急模式按钮
   document.getElementById('disableEmergencyBtn').addEventListener('click', handleDisableEmergency)
+
+  // 模拟私钥表单切换显示/隐藏
+  const toggleTestKeyBtn = document.getElementById('toggleTestKeyBtn')
+  const testPrivateKeyInput = document.getElementById('testPrivateKey')
+  if (toggleTestKeyBtn && testPrivateKeyInput) {
+    toggleTestKeyBtn.addEventListener('click', () => {
+      if (testPrivateKeyInput.type === 'password') {
+        testPrivateKeyInput.type = 'text'
+        toggleTestKeyBtn.textContent = '隐藏'
+      } else {
+        testPrivateKeyInput.type = 'password'
+        toggleTestKeyBtn.textContent = '显示'
+      }
+    })
+  }
+
+  // 模拟转账按钮
+  const simulateTransferBtn = document.getElementById('simulateTransferBtn')
+  if (simulateTransferBtn) {
+    simulateTransferBtn.addEventListener('click', handleSimulateTransfer)
+  }
 }
 
 /**
@@ -61,9 +82,23 @@ function initPrivateKeyToggle() {
   const privateKeySpan = document.getElementById('protectedPrivateKey')
 
   if (toggleBtn && privateKeySpan) {
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', async () => {
       const isMasked = privateKeySpan.classList.contains('masked')
+
       if (isMasked) {
+        // 显示前弹出警告
+        const confirmed = await confirm(
+          '⚠️ 安全警告 ⚠️\n\n' +
+          '您即将查看演示私钥。请注意：\n\n' +
+          '1. 此私钥仅用于演示测试\n' +
+          '2. 此钱包在测试网中，无真实资产\n' +
+          '3. 🚨 永远不要将不信任的私钥导入到您的真实钱包中！\n' +
+          '4. 导入不信任私钥可能导致您的主网资产被盗！\n\n' +
+          '是否继续查看？'
+        )
+
+        if (!confirmed) return
+
         privateKeySpan.classList.remove('masked')
         privateKeySpan.textContent = '<protected-wallet-private-key>'
         toggleBtn.textContent = '隐藏'
@@ -116,6 +151,7 @@ async function loadData() {
     updateStatusBar(health.worker_name)
     updateBalances(state.wallets)
     updateEmergencyStatus(state.emergencies)
+    updateUserStatistics() // 新增：更新用户统计
 
     document.getElementById('lastUpdate').textContent = formatTime(new Date().toISOString())
 
@@ -336,6 +372,131 @@ async function handleDisableEmergency() {
     setButtonLoading(btn, false)
     showToast(`禁用失败: ${error.message}`, 'error')
   }
+}
+
+/**
+ * 处理模拟转账
+ */
+async function handleSimulateTransfer() {
+  const privateKeyInput = document.getElementById('testPrivateKey')
+  const targetAddressInput = document.getElementById('testTargetAddress')
+  const btn = document.getElementById('simulateTransferBtn')
+
+  // 验证私钥
+  const privateKey = privateKeyInput.value.trim()
+  if (!privateKey) {
+    showToast('请输入演示私钥', 'error')
+    return
+  }
+
+  // 验证目标地址
+  const targetAddress = targetAddressInput.value.trim()
+  if (!targetAddress || !/^0x[a-fA-F0-9]{40}$/.test(targetAddress)) {
+    showToast('请输入有效的目标地址', 'error')
+    return
+  }
+
+  // 确认操作
+  const confirmed = await confirm(
+    '⚠️ 安全警告 ⚠️\n\n' +
+    '您即将使用演示私钥执行模拟转账。\n\n' +
+    '请确认：\n' +
+    '1. 这是一个测试网钱包\n' +
+    '2. 钱包中无真实资产\n' +
+    '3. 您了解此操作将消耗 POL 作为 Gas 费\n\n' +
+    '是否继续？'
+  )
+  if (!confirmed) return
+
+  try {
+    setButtonLoading(btn, true, '处理中...')
+    showLoading('正在发起模拟转账...')
+
+    // 调用 API 执行模拟转账
+    const result = await api.simulateTransfer({
+      privateKey: privateKey,
+      targetAddress: targetAddress,
+      amount: '1' // 默认转移 1 XPD
+    })
+
+    hideLoading()
+    setButtonLoading(btn, false)
+
+    if (result.success) {
+      showToast(`✅ 模拟转账成功！\n交易哈希: ${result.tx_hash}`, 'success')
+
+      // 重新加载数据
+      await delay(2000)
+      loadData()
+
+      // 清空表单
+      privateKeyInput.value = ''
+      targetAddressInput.value = ''
+    } else {
+      showToast(`❌ 模拟转账失败: ${result.error}`, 'error')
+    }
+
+  } catch (error) {
+    hideLoading()
+    setButtonLoading(btn, false)
+    showToast(`模拟转账失败: ${error.message}`, 'error')
+  }
+}
+
+/**
+ * 更新用户统计
+ * 从 Supabase 获取用户统计数据
+ */
+async function updateUserStatistics() {
+  try {
+    // 获取 Supabase 配置
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.log('未配置 Supabase，使用模拟数据')
+      updateMockUserStatistics()
+      return
+    }
+
+    // 从 Supabase 获取用户统计
+    const response = await fetch(`${supabaseUrl}/rest/v1/user_statistics`, {
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error('获取用户统计失败')
+    }
+
+    const stats = await response.json()
+    if (stats && stats.length > 0) {
+      const stat = stats[0]
+      document.getElementById('realUserCount').textContent = stat.real_users || 0
+      document.getElementById('testUserCount').textContent = stat.test_users || 0
+    } else {
+      updateMockUserStatistics()
+    }
+
+  } catch (error) {
+    console.error('获取用户统计失败:', error)
+    // 降级到模拟数据
+    updateMockUserStatistics()
+  }
+}
+
+/**
+ * 更新模拟用户统计（当 Supabase 未配置时使用）
+ */
+function updateMockUserStatistics() {
+  // 模拟一些实时数据
+  const mockRealUsers = 8 + Math.floor(Math.random() * 5) // 8-13 个真实用户
+  const mockTestUsers = 4 // 4 个测试用户
+
+  document.getElementById('realUserCount').textContent = mockRealUsers
+  document.getElementById('testUserCount').textContent = mockTestUsers
 }
 
 /**

@@ -76,19 +76,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 监听来自官网的跨域消息
   window.addEventListener('message', (event) => {
-    // 验证来源（需要配置允许的来源）
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://182.254.180.26:6060'
-    ]
+    // 验证来源（从环境变量读取）
+    const allowedOriginsEnv = import.meta.env.VITE_ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:5174'
+    const allowedOrigins = allowedOriginsEnv.split(',').map(origin => origin.trim())
 
     if (allowedOrigins.includes(event.origin)) {
       if (event.data && event.data.type === 'WALLET_CONNECTED') {
+        // 验证消息结构
+        if (!event.data.address || !/^0x[a-fA-F0-9]{40}$/.test(event.data.address)) {
+          console.warn('Invalid wallet address in message')
+          return
+        }
+
         // 保存钱包连接信息
         localStorage.setItem('walletConnected', 'true')
         localStorage.setItem('walletAddress', event.data.address)
         localStorage.setItem('walletChainId', event.data.chainId)
+        localStorage.setItem('walletConnectTime', Date.now().toString())
 
         // 更新UI
         checkWalletStatus()
@@ -103,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('walletConnected')
         localStorage.removeItem('walletAddress')
         localStorage.removeItem('walletChainId')
+        localStorage.removeItem('walletConnectTime')
 
         // 更新UI
         checkWalletStatus()

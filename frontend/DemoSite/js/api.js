@@ -1,9 +1,9 @@
 // API 调用封装
 
-// API 配置
+// API 配置 - 从环境变量读取
 const API_CONFIG = {
-  main: 'https://tactics-1.xplan2026.workers.dev',
-  backup: 'https://tactics-1.xplan2026.workers.dev'
+  main: import.meta.env.VITE_API_MAIN_URL || 'https://tactics-1.xplan2026.workers.dev',
+  backup: import.meta.env.VITE_API_BACKUP_URL || 'https://tactics-1.xplan2026.workers.dev'
 }
 
 // API 调用类
@@ -108,6 +108,15 @@ class WorkerAPI {
       method: 'POST',
       requireAuth: true,
       body: JSON.stringify({ amount })
+    })
+  }
+
+  // 模拟转账（使用表单中的私钥）
+  async simulateTransfer(data) {
+    return this.request('/simulate/transfer', {
+      method: 'POST',
+      requireAuth: true,
+      body: JSON.stringify(data)
     })
   }
 
