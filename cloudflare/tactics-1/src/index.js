@@ -26,7 +26,7 @@ const WORKER_ID = 'tactics-1'
 
 // 从环境变量读取配置
 const CONFIG = {
-  PROTECTED_WALLETS: [],
+  PROTECTED_WALLET: '',
   WALLET_SCAN_INTERVAL: 0,
   POL_THRESHOLD: '0.01',  // POL阈值（触发应急状态）
   MAX_SCAN_DURATION: 7000,
@@ -162,23 +162,9 @@ function parseConfig(env) {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
   }
 
-  const wallets = (env.PROTECTED_WALLETS || '')
-    .split(',')
-    .map(w => w.trim())
-    .filter(w => w && isValidWalletAddress(w))
+  CONFIG.PROTECTED_WALLET = env.PROTECTED_WALLET
 
-  // 去重（小写比较）
-  const uniqueWallets = [...new Set(wallets.map(w => w.toLowerCase()))]
-
-  // 数量上限限制
-  const MAX_WALLETS = 5
-  if (uniqueWallets.length > MAX_WALLETS) {
-    throw new Error(`被保护钱包数量超过限制: ${uniqueWallets.length} > ${MAX_WALLETS}`)
-  }
-
-  CONFIG.PROTECTED_WALLETS = uniqueWallets
-
-  if (CONFIG.PROTECTED_WALLETS.length === 0) {
+  if (!CONFIG.PROTECTED_WALLET) {
     console.warn('⚠️ [配置] 没有有效的被保护钱包地址')
   }
 
@@ -268,29 +254,30 @@ async function performScanRound(env, rpcPool, round, enableRetry, emergencyWalle
   const startTime = Date.now()
   const roundResults = []
 
-  for (const wallet of CONFIG.PROTECTED_WALLETS) {
-    // 跳过进入应急状态的钱包
-    if (currentEmergencyWallet === wallet) {
-      console.log(`🚨 [${WORKER_ID}] 钱包 ${wallet.slice(-4)} 处于应急状态，跳过常规扫描`)
-      continue
+  const wallet = CONFIG.PROTECTED_WALLET
+
+  // 跳过进入应急状态的钱包
+  if (currentEmergencyWallet === wallet) {
+    console.log(`🚨 [${WORKER_ID}] 钱包 ${wallet.slice(-4)} 处于应急状态，跳过常规扫描`)
+    return roundResults
+  }
+
+  const rpcSelector = createRpcSelector(rpcPool)
+  const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
+
+  let scanResult
+  try {
+    scanResult = await scanWallet(env, wallet, rpcUrl)
+    if (scanResult.success) {
+      await reportSuccess()
     }
+  } catch (error) {
+    if (enableRetry && round === 1) {
+      console.log(`⚠️ [${WORKER_ID}] 第${round}轮扫描失败，重试一次: ${wallet.slice(-4)} (${error.message})`)
+      await reportFailure()
 
-    const rpcSelector = createRpcSelector(rpcPool)
-    const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
-
-    let scanResult
-    try {
-      scanResult = await scanWallet(env, wallet, rpcUrl)
-      if (scanResult.success) {
-        await reportSuccess()
-      }
-    } catch (error) {
-      if (enableRetry && round === 1) {
-        console.log(`⚠️ [${WORKER_ID}] 第${round}轮扫描失败，重试一次: ${wallet.slice(-4)} (${error.message})`)
-        await reportFailure()
-
-        const { node: rpcUrl2, reportFailure: reportFailure2, reportSuccess: reportSuccess2 } = await rpcSelector.getNode()
-        try {
+      const { node: rpcUrl2, reportFailure: reportFailure2, reportSuccess: reportSuccess2 } = await rpcSelector.getNode()
+      try {
           scanResult = await scanWallet(env, wallet, rpcUrl2)
           if (scanResult.success) {
             await reportSuccess2()
@@ -337,7 +324,7 @@ async function performScanRound(env, rpcPool, round, enableRetry, emergencyWalle
 
   console.log(`✅ [${WORKER_ID}] 第${round}轮扫描完成:`, {
     scanned: roundResults.length,
-    skipped: CONFIG.PROTECTED_WALLETS.length - roundResults.length,
+    skipped: 0,
     duration: Date.now() - startTime
   })
 }
@@ -721,18 +708,16 @@ export default {
       const rpcPool = new RpcPoolOptimizedExtension(env)
       await rpcPool.initialize()
 
-      const results = []
+      const wallet = CONFIG.PROTECTED_WALLET
 
-      for (const wallet of CONFIG.PROTECTED_WALLETS) {
-        try {
-          // 获取RPC节点（使用优化扩展）
-          const rpcSelector = createRpcSelector(rpcPool)
-          const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
+      // 获取RPC节点（使用优化扩展）
+      const rpcSelector = createRpcSelector(rpcPool)
+      const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
 
-          const result = await scanWallet(env, wallet, rpcUrl)
-          if (result.success) {
-            await reportSuccess()
-          }
+      const result = await scanWallet(env, wallet, rpcUrl)
+      if (result.success) {
+        await reportSuccess()
+      }
 
           if (result.success) {
             results.push({
@@ -766,12 +751,12 @@ export default {
         worker_id: WORKER_ID,
         worker_name: env.WORKER_NAME,
         timestamp: new Date().toISOString(),
-        wallets: results,
+        wallets: [result],
         summary: {
-          total: CONFIG.PROTECTED_WALLETS.length,
-          emergency: results.filter(r => r.action === 'emergency').length,
-          transfer: results.filter(r => r.action === 'transfer').length,
-          normal: results.filter(r => r.action === 'none').length
+          total: 1,
+          emergency: result.action === 'emergency' ? 1 : 0,
+          transfer: result.action === 'transfer' ? 1 : 0,
+          normal: result.action === 'none' ? 1 : 0
         }
       }))
     } catch (error) {
@@ -821,15 +806,14 @@ export default {
           const bestRpcNodes = await rpcPool.getBestRpc()
           const providerUrls = bestRpcNodes ? bestRpcNodes.slice(0, 3) : []
 
-          const results = []
+          const wallet = CONFIG.PROTECTED_WALLET
 
-          for (const wallet of CONFIG.PROTECTED_WALLETS) {
-            // 获取RPC节点（使用优化扩展）
-            const rpcSelector = createRpcSelector(rpcPool)
-            const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
+          // 获取RPC节点（使用优化扩展）
+          const rpcSelector = createRpcSelector(rpcPool)
+          const { node: rpcUrl, reportFailure, reportSuccess } = await rpcSelector.getNode()
 
-            try {
-              const result = await scanWallet(env, wallet, rpcUrl)
+          try {
+            const result = await scanWallet(env, wallet, rpcUrl)
               if (result.success) {
                 await reportSuccess()
               }
@@ -965,17 +949,16 @@ export default {
 
       const lock = createDistributedLock(env, db)
 
-      const emergencyStatuses = []
+      const wallet = CONFIG.PROTECTED_WALLET
 
-      for (const wallet of CONFIG.PROTECTED_WALLETS) {
-        const lockStatus = await lock.checkLock(wallet)
+      const lockStatus = await lock.checkLock(wallet)
 
-        emergencyStatuses.push({
-          wallet: wallet,
-          wallet_short: wallet.slice(-4),
-          in_emergency: lockStatus.locked,
-          workerId: lockStatus.workerId,
-          timestamp: lockStatus.timestamp,
+      const emergencyStatuses = [{
+        wallet: wallet,
+        wallet_short: wallet.slice(-4),
+        in_emergency: lockStatus.locked,
+        workerId: lockStatus.workerId,
+        timestamp: lockStatus.timestamp,
           ttl: lockStatus.ttl,
           remaining: lockStatus.remaining
         })
@@ -1027,13 +1010,12 @@ export default {
         }
 
         // 清除所有钱包的锁
-        for (const wallet of CONFIG.PROTECTED_WALLETS) {
-          try {
-            await lock.releaseLock(wallet)
-            actions.push({ action: 'release_wallet_lock', wallet: wallet.slice(-4), success: true })
-          } catch (error) {
-            actions.push({ action: 'release_wallet_lock', wallet: wallet.slice(-4), success: false, error: error.message })
-          }
+        const wallet = CONFIG.PROTECTED_WALLET
+        try {
+          await lock.releaseLock(wallet)
+          actions.push({ action: 'release_wallet_lock', wallet: wallet.slice(-4), success: true })
+        } catch (error) {
+          actions.push({ action: 'release_wallet_lock', wallet: wallet.slice(-4), success: false, error: error.message })
         }
       } catch (error) {
         console.error(`❌ [${WORKER_ID}] 清除锁失败:`, error.message)
@@ -1127,8 +1109,8 @@ export default {
         })
       }
 
-      // 获取第一个被保护钱包地址
-      const protectedWallet = CONFIG.PROTECTED_WALLETS[0]
+      // 获取被保护钱包地址
+      const protectedWallet = CONFIG.PROTECTED_WALLET
       if (!protectedWallet) {
         return this.createCorsResponse(JSON.stringify({
           success: false,

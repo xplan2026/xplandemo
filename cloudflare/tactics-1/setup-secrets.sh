@@ -46,19 +46,19 @@ echo ""
 
 # 设置被保护钱包私钥（地址 A）
 echo "📝 配置被保护钱包私钥 (地址 A)..."
-echo "$PROTECTED_PRIVATE_KEY" | npx wrangler secret put WALLET_PRIVATE_KEY_32af405726ba6bd2f9b7ecdfed3bdd9b590c0939
+echo "$PROTECTED_WALLET_PRIVATE_KEY" | npx wrangler secret put WALLET_PRIVATE_KEY_32af405726ba6bd2f9b7ecdfed3bdd9b590c0939
 echo "✅ 被保护钱包私钥配置完成"
 echo ""
 
 # 设置安全钱包私钥（地址 B）
 echo "📝 配置安全钱包私钥 (地址 B)..."
-echo "$SAFE_PRIVATE_KEY" | npx wrangler secret put SAFE_WALLET_PRIVATE_KEY
+echo "$SAFE_WALLET_PRIVATE_KEY" | npx wrangler secret put SAFE_WALLET_PRIVATE_KEY
 echo "✅ 安全钱包私钥配置完成"
 echo ""
 
 # 设置 Gas 费钱包私钥（地址 C）
 echo "📝 配置 Gas 费钱包私钥 (地址 C)..."
-echo "$GAS_PRIVATE_KEY" | npx wrangler secret put GAS_FUNDING_WALLET_PRIVATE_KEY
+echo "$GAS_FUNDING_WALLET_PRIVATE_KEY" | npx wrangler secret put GAS_FUNDING_WALLET_PRIVATE_KEY
 echo "✅ Gas 费钱包私钥配置完成"
 echo ""
 

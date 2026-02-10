@@ -29,8 +29,8 @@ enabled = true
 WORKER_ID = "tactics-1"
 WORKER_NAME = "tactics-1"
 
-# 被保护钱包地址（逗号分隔）
-PROTECTED_WALLETS = "0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939"
+# 被保护钱包地址
+PROTECTED_WALLET = "0x32af405726ba6bd2f9b7ecdfed3bdd9b590c0939"
 
 # 钱包扫描间隔（秒）
 WALLET_SCAN_INTERVAL = "0"

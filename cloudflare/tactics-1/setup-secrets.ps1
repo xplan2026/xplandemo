@@ -50,19 +50,19 @@ Write-Host ""
 
 # 设置被保护钱包私钥（地址 A）
 Write-Host "📝 配置被保护钱包私钥 (地址 A)..." -ForegroundColor Yellow
-$envVars['PROTECTED_PRIVATE_KEY'] | npx wrangler secret put WALLET_PRIVATE_KEY_32af405726ba6bd2f9b7ecdfed3bdd9b590c0939
+$envVars['PROTECTED_WALLET_PRIVATE_KEY'] | npx wrangler secret put WALLET_PRIVATE_KEY_32af405726ba6bd2f9b7ecdfed3bdd9b590c0939
 Write-Host "✅ 被保护钱包私钥配置完成" -ForegroundColor Green
 Write-Host ""
 
 # 设置安全钱包私钥（地址 B）
 Write-Host "📝 配置安全钱包私钥 (地址 B)..." -ForegroundColor Yellow
-$envVars['SAFE_PRIVATE_KEY'] | npx wrangler secret put SAFE_WALLET_PRIVATE_KEY
+$envVars['SAFE_WALLET_PRIVATE_KEY'] | npx wrangler secret put SAFE_WALLET_PRIVATE_KEY
 Write-Host "✅ 安全钱包私钥配置完成" -ForegroundColor Green
 Write-Host ""
 
 # 设置 Gas 费钱包私钥（地址 C）
 Write-Host "📝 配置 Gas 费钱包私钥 (地址 C)..." -ForegroundColor Yellow
-$envVars['GAS_PRIVATE_KEY'] | npx wrangler secret put GAS_FUNDING_WALLET_PRIVATE_KEY
+$envVars['GAS_FUNDING_WALLET_PRIVATE_KEY'] | npx wrangler secret put GAS_FUNDING_WALLET_PRIVATE_KEY
 Write-Host "✅ Gas 费钱包私钥配置完成" -ForegroundColor Green
 Write-Host ""
 
